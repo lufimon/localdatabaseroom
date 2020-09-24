@@ -11,23 +11,37 @@ class EditActivity : AppCompatActivity() {
 
     private var viewModel: MainViewModel? = null
 
+    private var remoteViewModel: RemoteViewModel? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         setContentView(R.layout.activity_edit)
         title = "แก้ไข User"
         viewModel = MainViewModel(this)
+
+        remoteViewModel = RemoteViewModel(Service.getRetrofitService())
+
         val id = intent.getIntExtra(Constants.KEY_EDIT_ACTIVITY_USER_ID, 0)
-        viewModel?.getUserByUserId(id)
-            ?.observe(this, Observer {
-                edt_id.text = it.userId.toString().toEditable()
-                edt_first_name.text = it.firstName?.toEditable()
-                edt_last_name.text = it.lastName?.toEditable()
-                edt_age.text = it.age.toString().toEditable()
-                edt_facebook.text = it.contact?.facebook?.toEditable()
-                edt_lind_id.text = it.contact?.lineId?.toEditable()
-                edt_instagram.text = it.contact?.instagram?.toEditable()
-            })
+        remoteViewModel?.getUserByUserId(id){
+            edt_id.text = it.userId.toString().toEditable()
+            edt_first_name.text = it.firstName?.toEditable()
+            edt_last_name.text = it.lastName?.toEditable()
+            edt_age.text = it.age.toString().toEditable()
+            edt_facebook.text = it.contact?.facebook?.toEditable()
+            edt_lind_id.text = it.contact?.lineId?.toEditable()
+            edt_instagram.text = it.contact?.instagram?.toEditable()
+        }
+//        viewModel?.getUserByUserId(id)
+//            ?.observe(this, Observer {
+//                edt_id.text = it.userId.toString().toEditable()
+//                edt_first_name.text = it.firstName?.toEditable()
+//                edt_last_name.text = it.lastName?.toEditable()
+//                edt_age.text = it.age.toString().toEditable()
+//                edt_facebook.text = it.contact?.facebook?.toEditable()
+//                edt_lind_id.text = it.contact?.lineId?.toEditable()
+//                edt_instagram.text = it.contact?.instagram?.toEditable()
+//            })
 
         btn_edit.setOnClickListener {
             User().apply {
@@ -39,10 +53,15 @@ class EditActivity : AppCompatActivity() {
                 contact?.lineId = edt_lind_id.text.toString()
                 contact?.instagram = edt_instagram.text.toString()
             }.also {
-                viewModel?.updateUser(it)
-            }.run {
-                finish()
+//                viewModel?.updateUser(it)
+                remoteViewModel?.updateUser(it){
+                    setResult(RESULT_OK)
+                    finish()
+                }
             }
+//                .run {
+//                finish()
+//            }
         }
     }
 

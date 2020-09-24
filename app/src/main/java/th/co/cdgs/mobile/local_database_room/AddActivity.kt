@@ -11,6 +11,7 @@ import java.io.InputStream
 class AddActivity : AppCompatActivity() {
 
     private var viewModel: MainViewModel? = null
+    private var remoteViewModel: RemoteViewModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,6 +21,8 @@ class AddActivity : AppCompatActivity() {
 
         viewModel = MainViewModel(this)
 
+        remoteViewModel = RemoteViewModel(Service.getRetrofitService())
+
         btn_add.setOnClickListener {
             User().apply {
                 firstName = edt_first_name.text.toString()
@@ -28,11 +31,16 @@ class AddActivity : AppCompatActivity() {
                 contact?.facebook = edt_facebook.text.toString()
                 contact?.lineId = edt_lind_id.text.toString()
                 contact?.instagram = edt_instagram.text.toString()
-            }.also {
-                viewModel?.insertUser(it)
             }.run {
-                finish()
+//                viewModel?.insertUser(it)
+                remoteViewModel?.addUser(user = this){
+                    setResult(RESULT_OK)
+                    finish()
+                }
             }
+//                .run {
+//                finish()
+//            }
         }
     }
 

@@ -1,5 +1,6 @@
 package th.co.cdgs.mobile.local_database_room
 
+import android.app.Activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -13,6 +14,8 @@ class MainActivity : AppCompatActivity() {
     private var viewModel: MainViewModel? = null
     private var userAdapter: UserAdapter? = null
 
+    private var remoteViewModel: RemoteViewModel? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -20,6 +23,8 @@ class MainActivity : AppCompatActivity() {
 
         viewModel = MainViewModel(this)
         userAdapter = UserAdapter()
+
+        remoteViewModel = RemoteViewModel(Service.getRetrofitService())
 
         userAdapter?.onDelete = { userId ->
             AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog)
@@ -33,8 +38,12 @@ class MainActivity : AppCompatActivity() {
                 }.setPositiveButton(
                     "ตกลง"
                 ) { dialog, _ ->
-                    viewModel?.deleteUserByUserId(userId)
-                    dialog.dismiss()
+                    remoteViewModel?.deleteUser(userId){
+                        dialog.dismiss()
+                        callAllUser()
+                    }
+//                    viewModel?.deleteUserByUserId(userId)
+//                    dialog.dismiss()
                 }
                 .create()
                 .show()
@@ -43,12 +52,12 @@ class MainActivity : AppCompatActivity() {
         userAdapter?.onEdit = { userId ->
             val intent = Intent(this@MainActivity, EditActivity::class.java)
             intent.putExtra(Constants.KEY_EDIT_ACTIVITY_USER_ID, userId)
-            startActivity(intent)
+            startActivityForResult(intent, 0x56)
         }
 
         btn_insert.setOnClickListener {
             val intent = Intent(this, AddActivity::class.java)
-            startActivity(intent)
+            startActivityForResult(intent,0x55)
         }
 
         recycler_view.apply {
@@ -56,10 +65,28 @@ class MainActivity : AppCompatActivity() {
             adapter = userAdapter
         }
 
-        viewModel?.getAllUsers()?.observe(this, Observer {
+        //room get all user
+//        viewModel?.getAllUsers()?.observe(this, Observer {
+//            userAdapter?.setListData(it)
+//        })
+
+        callAllUser()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if(resultCode == Activity.RESULT_OK){
+            when(requestCode){
+                0x55,0x56 -> {
+                    callAllUser()
+                }
+            }
+        }
+    }
+
+    private fun callAllUser(){
+        remoteViewModel?.getAllUser {
             userAdapter?.setListData(it)
-        })
-
-
+        }
     }
 }
